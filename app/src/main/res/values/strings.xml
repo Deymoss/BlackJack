@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">BlackJack</string>
+    <string name="hit_button">Hit</string>
+    <string name="split_button">Split</string>
+    <string name="stand_button">Stand</string>
+    <string name="double_button">Double</string>
+    <string name="bet_button">Bet</string>
+    <string name="cancel_button">Cancel</string>
+    <string name="next_button">Next</string>
+    <string name="exit_button">Exit</string>
+</resources>
