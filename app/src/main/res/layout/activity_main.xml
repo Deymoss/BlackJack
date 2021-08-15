@@ -113,20 +113,20 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.639" />
 
-    <Button
-        android:id="@+id/splitButton"
-        android:layout_width="80dp"
-        android:layout_height="50dp"
-        android:backgroundTint="@color/easily_red"
-        android:text="@string/split_button"
-        android:textSize="15sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.848"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/hitButton"
+<!--    <Button-->
+<!--        android:id="@+id/splitButton"-->
+<!--        android:layout_width="80dp"-->
+<!--        android:layout_height="50dp"-->
+<!--        android:backgroundTint="@color/easily_red"-->
+<!--        android:text="@string/split_button"-->
+<!--        android:textSize="15sp"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintHorizontal_bias="0.848"-->
+<!--        app:layout_constraintStart_toStartOf="parent"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/hitButton"-->
 
-        app:layout_constraintVertical_bias="0.175" />
+<!--        app:layout_constraintVertical_bias="0.175" />-->
 
     <Button
         android:id="@+id/doubleButton"
@@ -137,7 +137,7 @@
         android:textSize="15sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.993"
+        app:layout_constraintHorizontal_bias="0.923"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/standButton"
         app:layout_constraintVertical_bias="0.175" />

@@ -17,9 +17,11 @@ import kotlin.collections.shuffled
 import android.graphics.Shader
 
 import android.graphics.LinearGradient
+import android.media.MediaPlayer
 
 import android.text.TextPaint
 import androidx.core.view.isVisible
+import kotlin.concurrent.thread
 import kotlin.system.exitProcess
 
 
@@ -36,10 +38,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        playSound(6)
         val paint: TextPaint = binding.Cash.paint
         val width = paint.measureText("5000$")
-
         val textShader: Shader = LinearGradient(
             0F, 0F, width, binding.Cash.textSize, intArrayOf(
                 Color.parseColor("#F97C3C"),
@@ -57,7 +58,7 @@ class MainActivity : AppCompatActivity() {
             hitButton.isEnabled = false
             standButton.isEnabled = false
             doubleButton.isEnabled = false
-            splitButton.isEnabled = false
+            //splitButton.isEnabled = false
             dice50Button.setOnClickListener {
                 addBet(R.drawable._50dice, 50)
             }
@@ -97,8 +98,7 @@ class MainActivity : AppCompatActivity() {
                     hitPressed(false, player)
                 } else if(dealerTurn && dealer.drawedCards<2) {
                     hitPressed(true, player)
-                } else if(!dealerTurn && player.drawedCards == 2)
-                {
+                } else if(!dealerTurn && player.drawedCards == 2) {
                     hitPressed(true, player)
                 } else if(dealerTurn && dealer.drawedCards > 2 && dealer.score <17) {
                     hitPressed(true, player)
@@ -114,7 +114,6 @@ class MainActivity : AppCompatActivity() {
                 .rotationY(90F)
                 .setDuration(500)
                 .withEndAction {
-                    run {
 
                         view.setImageResource(ResId)
 
@@ -124,7 +123,6 @@ class MainActivity : AppCompatActivity() {
                             .rotationY(0F)
                             .setDuration(500)
                             .start()
-                    }
                 }.start()
         }
 
@@ -186,7 +184,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             countingPlayerScore(card, dealerTurn)
-            if(player.score > 21)
+            if(player.score > 21 && !dealerTurn)
             {
                 stand()
             }
@@ -194,11 +192,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun countingPlayerScore(card: Map.Entry<String, Int>, dealerTurn: Boolean){
         if(dealerTurn) {
-            if(card.key.startsWith("_a"))
-            {
-                if(dealer.score < 11) {
-                    if(dealer.score == 10 && dealer.cards.size == 1) {
+            if (card.key.startsWith("_a")) {
+                if (dealer.score < 11) {
+                    if (dealer.score == 10 && dealer.cards.size == 1) {
                         dealer.score += 11
+                        dealer.cards.add(11)
                         dealer.blackCheck = true
                     } else {
                         dealer.score += 11
@@ -208,22 +206,21 @@ class MainActivity : AppCompatActivity() {
                     dealer.score += 1
                     dealer.cards.add(1)
                 }
+            } else if (dealer.score + card.value > 21 && dealer.cards.contains(11)) {
+                dealer.cards.remove(11)
+                dealer.cards.add(1)
+                dealer.cards.add(card.value)
+                dealer.score = dealer.cards.sum()
             } else {
                 dealer.score += card.value
                 dealer.cards.add(card.value)
             }
-            if(dealer.score + card.value >21 && dealer.cards.contains(11))
-            {
-                dealer.cards.remove(11)
-                dealer.cards.add(1)
-                dealer.score = dealer.cards.sum()
-            }
         } else {
-            println("fuck")
             if (card.key.startsWith("_a")) {
                 if (player.score < 11) {
                     if (player.score == 10 && player.cards.size == 1) {
                         player.score += 11
+                        player.cards.add(11)
                         player.blackCheck = true
                     } else {
                         player.score += 11
@@ -233,17 +230,19 @@ class MainActivity : AppCompatActivity() {
                     player.score += 1
                     player.cards.add(1)
                 }
+            } else if (player.score + card.value > 21 && player.cards.contains(11)) {
+                player.cards.remove(11)
+                player.cards.add(1)
+                player.cards.add(card.value)
+                player.score = player.cards.sum()
             } else {
                 player.score += card.value
                 player.cards.add(card.value)
             }
-            if (player.score + card.value > 21 && player.cards.contains(11)) {
-                player.cards.remove(11)
-                player.cards.add(1)
-                player.cards.sort()
-                player.score = player.cards.sum()
-            }
+
         }
+        println("dealer : ${dealer.cards}")
+        println("player : ${player.cards}")
     }
 
     private fun addBet(resId: Int, amount: Int) {
@@ -279,6 +278,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun betThis() {
+        if(player.betValue == 300) playSound(3)
         if(player.betValue != 0) {
             animState = "betThis"
             hitPressed(false, player)
@@ -299,7 +299,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun cancelBet() {
-        player.amountOfCash += player.betValue
+        println("${player.amountOfCash} qwe ${player.betValue}")
+        //player.amountOfCash += player.betValue
         player.betValue = 0
         binding.betAmount.text = player.betValue.toString()
         for(i in data.diceViews)
@@ -309,50 +310,50 @@ class MainActivity : AppCompatActivity() {
         data.diceViews.clear()
     }
 
-    private fun split() {
-        if(player.betValue <= player.amountOfCash) {
-            splitPlayer.hBias = player.hBias+0.1F
-            val newView = TextView(this)
-            binding.myLayout.addView(newView)
-            newView.layoutParams.height = ConstraintSet.WRAP_CONTENT
-            newView.layoutParams.width = ConstraintSet.WRAP_CONTENT
-            newView.id = View.generateViewId()
-            newView.text = player.betValue.toString()
-            newView.textSize = 18F
-            newView.setTextColor(binding.betAmount.textColors)
-            data.textViews.add(newView)
-            ConstraintSet().apply {
-                clone(binding.myLayout)
-                connect(newView.id, ConstraintSet.BOTTOM, binding.myLayout.id, ConstraintSet.BOTTOM)
-                connect(newView.id, ConstraintSet.TOP, binding.myLayout.id, ConstraintSet.TOP)
-                connect(newView.id, ConstraintSet.LEFT, binding.myLayout.id, ConstraintSet.LEFT)
-                connect(newView.id, ConstraintSet.RIGHT, binding.myLayout.id, ConstraintSet.RIGHT)
-                setHorizontalBias(newView.id, 0.590F)
-                setVerticalBias(newView.id, 0.726F)
-                    setHorizontalBias(player.cardViews[0].id, player.hBias - 0.1F)
-                    setHorizontalBias(player.cardViews[1].id, player.hBias + 0.1F)
-                    setHorizontalBias(binding.betAmount.id, player.hBias + 0.04F)
-                val transition = AutoTransition()
-                transition.duration = 700
-                transition.interpolator = AccelerateDecelerateInterpolator()
-                TransitionManager.beginDelayedTransition(binding.myLayout, transition)
-                applyTo(binding.myLayout)
-            }
-            player.hBias = player.hBias - 0.1F
-            splitPlayer.cardViews.add(player.cardViews[1])
-            player.cardViews.removeAt(1)
-            splitPlayer.cards.add(player.cards[1])
-            player.cards.removeAt(1)
-            data.isSplited = true
-        }
-    }
+//    private fun split() {
+//        if(player.betValue <= player.amountOfCash) {
+//            splitPlayer.hBias = player.hBias+0.1F
+//            val newView = TextView(this)
+//            binding.myLayout.addView(newView)
+//            newView.layoutParams.height = ConstraintSet.WRAP_CONTENT
+//            newView.layoutParams.width = ConstraintSet.WRAP_CONTENT
+//            newView.id = View.generateViewId()
+//            newView.text = player.betValue.toString()
+//            newView.textSize = 18F
+//            newView.setTextColor(binding.betAmount.textColors)
+//            data.textViews.add(newView)
+//            ConstraintSet().apply {
+//                clone(binding.myLayout)
+//                connect(newView.id, ConstraintSet.BOTTOM, binding.myLayout.id, ConstraintSet.BOTTOM)
+//                connect(newView.id, ConstraintSet.TOP, binding.myLayout.id, ConstraintSet.TOP)
+//                connect(newView.id, ConstraintSet.LEFT, binding.myLayout.id, ConstraintSet.LEFT)
+//                connect(newView.id, ConstraintSet.RIGHT, binding.myLayout.id, ConstraintSet.RIGHT)
+//                setHorizontalBias(newView.id, 0.590F)
+//                setVerticalBias(newView.id, 0.726F)
+//                    setHorizontalBias(player.cardViews[0].id, player.hBias - 0.1F)
+//                    setHorizontalBias(player.cardViews[1].id, player.hBias + 0.1F)
+//                    setHorizontalBias(binding.betAmount.id, player.hBias + 0.04F)
+//                val transition = AutoTransition()
+//                transition.duration = 700
+//                transition.interpolator = AccelerateDecelerateInterpolator()
+//                TransitionManager.beginDelayedTransition(binding.myLayout, transition)
+//                applyTo(binding.myLayout)
+//            }
+//            player.hBias = player.hBias - 0.1F
+//            splitPlayer.cardViews.add(player.cardViews[1])
+//            player.cardViews.removeAt(1)
+//            splitPlayer.cards.add(player.cards[1])
+//            player.cards.removeAt(1)
+//            data.isSplited = true
+//        }
+//    }
 
     private fun stand() {
         binding.apply {
             hitButton.isEnabled = false
             standButton.isEnabled = false
             doubleButton.isEnabled = false
-            splitButton.isEnabled = false
+            //splitButton.isEnabled = false
         }
         if(data.isSplited && data.currentSplit == 0) {
             data.currentSplit = 1
@@ -366,17 +367,13 @@ class MainActivity : AppCompatActivity() {
                     .rotationY(90F)
                     .setDuration(200)
                     .withEndAction {
-                        run {
-
                             setImageResource(this.resources.getIdentifier(dealer.firstCard.entries.first().key, "drawable", packageName))
-
                             // second quarter turn
                            rotationY = -90F
                             animate().withLayer()
                                 .rotationY(0F)
                                 .setDuration(200)
                                 .start()
-                        }
                     }.start()
             }
             if(dealer.cards.sum() < 17) {
@@ -392,7 +389,7 @@ class MainActivity : AppCompatActivity() {
                 hitButton.isEnabled = false
                 standButton.isEnabled = false
                 doubleButton.isEnabled = false
-                splitButton.isEnabled = false
+                //splitButton.isEnabled = false
             }
             player.betValue *=2
             hitPressed(false, player)
@@ -413,14 +410,14 @@ class MainActivity : AppCompatActivity() {
             hitButton.isEnabled = true
             standButton.isEnabled = true
             doubleButton.isEnabled = true
-            splitButton.isEnabled = true
+            //splitButton.isEnabled = true
         }
 
-            binding.splitButton.setOnClickListener {
-                if(player.cards.size == 2 && player.cards[0] == player.cards[1]) {
-                    split()
-                }
-            }
+//            binding.splitButton.setOnClickListener {
+//                if(player.cards.size == 2 && player.cards[0] == player.cards[1]) {
+//                    split()
+//                }
+//            }
         binding.doubleButton.setOnClickListener {
             double()
         }
@@ -429,34 +426,54 @@ class MainActivity : AppCompatActivity() {
         }
     }
     private fun endGame() {
+        println("${player.score} and ${dealer.score}")
         if((player.score == 21 && player.cards[0] == 10 && player.cards[1] == 11) || (player.score == 21 && player.cards[0] == 11 && player.cards[1] == 10)) {
             player.blackCheck = true
             player.amountOfCash += player.betValue * 3
             data.winstat.add(1)
+            playSound(data.winSound.random())
             Toast.makeText(applicationContext, "Вы победили, EZ", Toast.LENGTH_SHORT).show()
         } else if((dealer.score == 21 && dealer.cards[0] == 10 && dealer.cards[1] == 11) || (dealer.score == 21 && dealer.cards[0] == 11 && dealer.cards[1] == 10)) {
             dealer.blackCheck = true
             data.winstat.add(0)
+            val lastGameId = data.winstat.size
+            if(lastGameId > 2 && data.winstat[lastGameId - 1] == 0 && data.winstat[lastGameId - 2] == 0) {
+                playSound(1)
+            } else {
+                playSound(data.loseSound.random())
+            }
             Toast.makeText(applicationContext, "Вы проиграли.", Toast.LENGTH_SHORT).show()
         } else if(player.score == dealer.score || (player.score > 21 && dealer.score > 21)) {
             data.winstat.add(0)
             player.amountOfCash += player.betValue
-            println(player.betValue)
+            playSound(11)
             Toast.makeText(applicationContext, "Ничья!", Toast.LENGTH_SHORT).show()
         } else if(player.score > 21 && dealer.score <= 21) {
             data.winstat.add(0)
+            playSound(data.specialLose.random())
             Toast.makeText(applicationContext, "Вы проиграли.", Toast.LENGTH_SHORT).show()
         } else if(dealer.score > 21 && player.score <= 21) {
             data.winstat.add(1)
             player.amountOfCash += player.betValue * 2
+            playSound(data.winSound.random())
             Toast.makeText(applicationContext, "Вы победили, EZ", Toast.LENGTH_SHORT).show()
         } else if(player.score > dealer.score) {
             data.winstat.add(1)
             player.amountOfCash += player.betValue * 2
+            playSound(data.winSound.random())
             Toast.makeText(applicationContext, "Вы победили, EZ", Toast.LENGTH_SHORT).show()
         } else if(player.score < dealer.score) {
             data.winstat.add(0)
+            val lastGameId = data.winstat.size
+            if(lastGameId > 2 && data.winstat[lastGameId - 1] == 0 && data.winstat[lastGameId - 2] == 0) {
+                playSound(1)
+            } else {
+                playSound(data.loseSound.random())
+            }
             Toast.makeText(applicationContext, "Вы проиграли.", Toast.LENGTH_SHORT).show()
+        }
+        if(player.amountOfCash == 0) {
+            playSound(12)
         }
         binding.apply {
             Cash.text = player.amountOfCash.toString() + "$"
@@ -500,5 +517,9 @@ class MainActivity : AppCompatActivity() {
         splitPlayer.reset()
         data.reset()
         binding.betAmount.text = ""
+    }
+    private fun playSound(resource: Int) {
+        thread { val mp1 = MediaPlayer.create(applicationContext, this.resources.getIdentifier("_$resource", "raw", packageName))
+            mp1.start() }
     }
 }

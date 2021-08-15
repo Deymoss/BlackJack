@@ -9,6 +9,9 @@ data class WholeData(val name:String = "") {
     var textViews = mutableListOf<TextView>()
     var isSplited = false
     var winstat = mutableListOf<Int>()
+    val winSound = listOf<Int>(2, 7, 8, 11, 13, 9)
+    var loseSound = listOf<Int>(5, 14, 15)
+    val specialLose = listOf<Int>(4, 10)
     var currentSplit = 0
     val deck = mapOf("_2c" to 2,"_2d" to 2,"_2h" to 2,"_2s" to 2,"_3c" to 3,"_3d" to 3,"_3h" to 3,"_3s" to 3,
         "_4c" to 4,"_4d" to 4,"_4h" to 4,"_4s" to 4,"_5c" to 5,"_5d" to 5,"_5h" to 5,"_5s" to 5,
